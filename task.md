@@ -1,111 +1,204 @@
-# Implementation Plan for check_condition_stop_page_wheel Function
+# Refactoring Plan: Modularizing `custom_controller.py`
 
 ## Overview
-This markdown Document outlines a detailed implementation plan for adding a new function called `check_condition_stop_page_wheel` to the `custom_controller.py` file. This function will help the agent determine whether to continue scrolling vertically or stop based on screenshot analysis using Claude's Vision API.
 
-## Implementation Checklist
+**Goal:** Refactor `custom_controller.py` to improve modularity by separating action logic and helper functions into a dedicated directory structure, while preserving existing functionality.
 
-### 1. Function Setup and Integration
-- [ ] Define function signature with appropriate parameters (browser: BrowserContext)
-- [ ] Add appropriate decorator using controller.action
-- [ ] Create proper class model for function parameters if needed
-- [ ] Include comprehensive docstring explaining function purpose and usage
+## Phase 1: Setup and Helper Function Migration
 
-### 2. Logging Setup
-- [ ] Configure logger with appropriate name ("scroll_condition_check")
-- [ ] Set up log file path in '/Users/meirsabag/Public/browser_use_ver4_newVersion/logs'
-- [ ] Create log formatter with detailed timestamp
-- [ ] Add session boundary markers in logs
-- [ ] Log function parameters and execution steps
-- [ ] Configure proper log levels (INFO, DEBUG, ERROR)
+### 1. Create Directory Structure
+- Create a new directory named `controller_logic` inside the `remote_tools_folders` directory.
+- **Path:** `remote_tools_folders/controller_logic/`
 
-### 3. Environment Setup
-- [ ] Load environment variables (dotenv)
-- [ ] Retrieve ANTHROPIC_API_KEY from environment variables
-- [ ] Initialize Anthropic client with API key
-- [ ] Log successful initialization of client
+### 2. Create Package Initializer
+- Create an empty file named `__init__.py` inside the new directory.
+- **Path:** `remote_tools_folders/controller_logic/__init__.py`
+- **Purpose:** This makes `controller_logic` a Python package, allowing relative imports.
 
-### 4. Screenshot Capture
-- [ ] Get current page from browser context
-- [ ] Take a screenshot of the current page
-- [ ] Measure and log screenshot capture time
-- [ ] Determine image format (PNG or JPEG)
-- [ ] Check screenshot data validity and size
-- [ ] Log successful screenshot capture
+### 3. Create Utility File
+- Create a new file named `utils.py` inside the `controller_logic` directory.
+- **Path:** `remote_tools_folders/controller_logic/utils.py`
 
-### 5. Image Processing
-- [ ] Setup directory path for training images
-- [ ] Load training images in correct sequence (1.jpg, 2.jpg, etc.)
-- [ ] Convert training images to base64 format
-- [ ] Determine correct media type for each image
-- [ ] Prepare complete array of messages with correct image data
+### 4. Migrate Helper Functions
+- **Cut** the following function definitions from `custom_controller.py` and **paste** them into `remote_tools_folders/controller_logic/utils.py`:
+  - `generate_arc_positions`
+  - `create_segments`
+  - `generate_speed_profile`
+  - `get_speed_factor`
+  - `generate_scroll_steps`
+  - `scroll_segment_with_1px_increments` (move here for potential broader reuse)
+- Add necessary imports to the top of `utils.py`:
+  ```python
+  import math
+  import random
+  from typing import Optional, List, Tuple
+  import asyncio
+  ```
 
-### 6. Claude Vision API Integration
-- [ ] Prepare system prompt exactly as specified
-- [ ] Format user messages with correct image data insertion
-- [ ] Replace final message's image data with the captured screenshot
-- [ ] Call Claude Vision API with appropriate parameters
-- [ ] Measure and log API call duration
-- [ ] Handle API call errors with appropriate error messages
+## Phase 2: Action Logic Migration
 
-### 7. Response Processing
-- [ ] Extract text response from Claude's message
-- [ ] Parse to find decision (CONTINUE/STOP)
-- [ ] Extract scroll parameter value (if CONTINUE)
-- [ ] Log decision and parameters
-- [ ] Format extracted data for return value
+*For each action, we will create a logic file, move the core implementation, and define an exported function.*
 
-### 8. Error Handling
-- [ ] Implement try/except blocks around major operations
-- [ ] Add specific error handling for screenshot capture failures
-- [ ] Add specific error handling for API call failures
-- [ ] Add specific error handling for response parsing failures
-- [ ] Log detailed error information including tracebacks
-- [ ] Return appropriate error messages in ActionResult
+### 5. Create `mouse_wheel_logic.py`
+- Create file: `remote_tools_folders/controller_logic/mouse_wheel_logic.py`
+- Define function: 
+  ```python
+  async def execute_mouse_wheel(params, page, logger)
+  ```
+- Copy the entire `try` block content from the `mouse_wheel` function in `custom_controller.py` into `execute_mouse_wheel`.
+- Copy the *nested function definition* `scroll_segment_with_logging` into `mouse_wheel_logic.py` (likely *outside* `execute_mouse_wheel` but within the same file).
+- Ensure all necessary imports are added.
+- Modify `execute_mouse_wheel` to `return` the final success message string instead of `ActionResult`.
+- Modify `execute_mouse_wheel` to `raise` exceptions if they occur, allowing the original `mouse_wheel` function to catch them.
 
-### 9. Return Value Preparation
-- [ ] Create ActionResult with extracted content
-- [ ] Include decision (CONTINUE/STOP) in metadata
-- [ ] Include scroll parameter (if applicable) in metadata
-- [ ] Set include_in_memory flag appropriately
-- [ ] Log final result being returned
+### 6. Create `extract_audience_logic.py`
+- Create file: `remote_tools_folders/controller_logic/extract_audience_logic.py`
+- Define function: 
+  ```python
+  async def execute_extract_audience(params, browser, logger)
+  ```
+- Copy the entire `try` block content from the `extract_audience_data` function in `custom_controller.py` into `execute_extract_audience`.
+- Ensure all necessary imports are added.
+- Modify `execute_extract_audience` to return a tuple: `(message, metadata)` where `message` is the success string and `metadata` is the dictionary.
+- Modify `execute_extract_audience` to `raise` exceptions.
 
-### 10. Testing and Validation
-- [ ] Review code for consistency with codebase patterns
-- [ ] Check parameter naming conventions match existing code
-- [ ] Verify error handling follows codebase patterns
-- [ ] Ensure logging details match existing functions
-- [ ] Verify ActionResult format matches expectations
+### 7. Create `check_condition_logic.py`
+- Create file: `remote_tools_folders/controller_logic/check_condition_logic.py`
+- Define function: 
+  ```python
+  async def execute_check_condition(browser, logger)
+  ```
+- Copy the entire `try` block content from the `check_condition_stop_page_wheel` function in `custom_controller.py` into `execute_check_condition`.
+- Ensure all necessary imports are added.
+- Modify `execute_check_condition` to return a tuple `(message, metadata)`.
+- Modify `execute_check_condition` to `raise` exceptions.
 
-## Critical Implementation Details
+### 8. Create `mouse_actions_logic.py`
+- Create file: `remote_tools_folders/controller_logic/mouse_actions_logic.py`
+- Define three functions for the mouse action logic:
+  ```python
+  async def execute_move_mouse(params, page)
+  async def execute_mouse_click(page)
+  async def execute_mouse_hover(x, y, page)
+  ```
+- Copy the respective `try` block content from each original function.
+- Return success message strings and raise exceptions.
+- Add necessary imports.
 
-### Claude API Call Format
-The function must follow the exact LLM calling format provided, with these key components:
-- Use model "claude-3-5-sonnet-20241022"
-- Set max_tokens to 8192
-- Set temperature to 0.1
-- Insert the system prompt exactly as provided
-- Populate all image data fields correctly
-- For the final message, replace image data with the captured screenshot
+### 9. Create `custom_prompt_logic.py`
+- Create file: `remote_tools_folders/controller_logic/custom_prompt_logic.py`
+- Define:
+  ```python
+  async def execute_generate_custom_prompt()
+  ```
+- Copy `try` block content from `generate_custom_prompt`.
+- Return the prompt string and the metadata dict: `(prompt, metadata)`.
+- Raise exceptions.
+- Add necessary imports.
 
-### Training Images Path
-Training images are located at:
-`/Users/meirsabag/Public/browser_use_ver4_newVersion/training_images/train-condition-scroll-audience-page`
+## Phase 3: Update `custom_controller.py`
 
-### Screenshot Format
-Screenshot must be:
-- Full page capture
-- Base64 encoded
-- Correctly identified as PNG or JPEG format
-- Properly inserted into the final message's image data field
+### 10. Remove Migrated Code
+- Delete the helper function definitions (`generate_arc_positions`, etc.) that were moved in Step 4.
+- Delete the *content* inside the `try` blocks of the action functions that was moved in Steps 5-9.
+- Keep the function definitions, decorators, parameters, and the `try...except ActionResult(error=...)` structure.
 
-### Response Parsing
-The function must correctly parse Claude's response to extract:
-1. Decision: CONTINUE or STOP
-2. Scroll parameter: Pixel value (e.g., "350px") or NONE
+### 11. Add Imports for Logic
+- At the top of `custom_controller.py`, add relative imports for the new logic functions:
+  ```python
+  from .controller_logic.utils import generate_arc_positions # Example if needed directly
+  from .controller_logic.mouse_actions_logic import execute_move_mouse, execute_mouse_click, execute_mouse_hover
+  from .controller_logic.mouse_wheel_logic import execute_mouse_wheel
+  from .controller_logic.extract_audience_logic import execute_extract_audience
+  from .controller_logic.check_condition_logic import execute_check_condition
+  from .controller_logic.custom_prompt_logic import execute_generate_custom_prompt
+  # Add other imports from utils if they are directly needed by controller actions
+  ```
 
-### ActionResult Format
-The return value should include:
-- Extracted content: The decision and reasoning
-- Metadata: Should include decision and scroll parameter
-- include_in_memory: Set to true 
+### 12. Update `move_mouse` Action
+- Inside the `try` block:
+  ```python
+  page = await browser.get_current_page()
+  message = await execute_move_mouse(params, page)
+  return ActionResult(extracted_content=message, include_in_memory=True)
+  ```
+
+### 13. Update `mouse_click` Action
+- Inside the `try` block:
+  ```python
+  page = await browser.get_current_page()
+  message = await execute_mouse_click(page)
+  return ActionResult(extracted_content=message, include_in_memory=True)
+  ```
+
+### 14. Update `mouse_hover` Action
+- Inside the `try` block:
+  ```python
+  page = await browser.get_current_page()
+  message = await execute_mouse_hover(x, y, page) # Pass x, y if they are params
+  return ActionResult(extracted_content=message, include_in_memory=True)
+  ```
+
+### 15. Update `mouse_wheel` Action
+- Inside the `try` block:
+  ```python
+  # Logger setup might remain here or be initialized/passed differently
+  log_dir = "/Users/meirsabag/Public/browser_use_ver4_newVersion/logs"
+  # ... (rest of logger setup) ...
+  logger = logging.getLogger("mouse_wheel") 
+  # ... (ensure logger is configured) ...
+
+  page = await browser.get_current_page()
+  message = await execute_mouse_wheel(params, page, logger) # Pass logger
+  
+  return ActionResult(extracted_content=message, include_in_memory=True)
+  ```
+- Adjust the `except` block if the logic function handles logging internally.
+
+### 16. Update `extract_audience_data` Action
+- Inside the `try` block:
+  ```python
+  # Logger setup
+  log_dir = "/Users/meirsabag/Public/browser_use_ver4_newVersion/logs"
+  # ... (rest of logger setup) ...
+  logger = logging.getLogger("audience_extraction")
+  # ... (ensure logger is configured) ...
+
+  message, metadata = await execute_extract_audience(params, browser, logger) # Pass logger
+  return ActionResult(extracted_content=message, include_in_memory=True, metadata=metadata)
+  ```
+
+### 17. Update `check_condition_stop_page_wheel` Action
+- Inside the `try` block:
+  ```python
+  # Logger setup
+  log_dir = "/Users/meirsabag/Public/browser_use_ver4_newVersion/logs"
+  # ... (rest of logger setup) ...
+  logger = logging.getLogger("scroll_condition_check")
+  # ... (ensure logger is configured) ...
+
+  message, metadata = await execute_check_condition(browser, logger) # Pass logger
+  return ActionResult(extracted_content=message, include_in_memory=True, metadata=metadata)
+  ```
+
+### 18. Update `generate_custom_prompt` Action
+- Inside the `try` block:
+  ```python
+  prompt, metadata = await execute_generate_custom_prompt()
+  return ActionResult(extracted_content=prompt, include_in_memory=True, metadata=metadata)
+  ```
+
+### 19. Review and Test
+- Carefully review all changes in `custom_controller.py` and the new files in `controller_logic/`.
+- Check for any missing imports in the new files.
+- Ensure relative imports in `custom_controller.py` are correct.
+- Thoroughly test all actions defined in `custom_controller.py` to confirm they still work exactly as before the refactoring.
+
+## Why This Approach Won't Break Existing Code
+
+- We are **moving** existing, working code blocks, not rewriting their internal logic.
+- The `@controller.action` decorators, function signatures, Pydantic models, and the overall structure of how actions are called and results are handled remain unchanged in `custom_controller.py`.
+- The `try...except` blocks are preserved in `custom_controller.py`, ensuring that errors raised from the logic functions are caught and returned as `ActionResult(error=...)` just like before.
+- Dependencies (like `browser`, `params`, `page`, `logger`) are explicitly passed to the logic functions.
+
+This refactoring separates the concerns, making `custom_controller.py` primarily responsible for action registration and interfacing with the `browser-use` framework, while the detailed implementation logic resides in the `controller_logic` package.

@@ -1,0 +1,16 @@
+[
+  {
+    "Name": "Test Audience 1",
+    "Type": "Custom Audience",
+    "Availability": "Ready",
+    "Date created": "01/01/2023",
+    "Audience ID": "123456789012345"
+  },
+  {
+    "Name": "Test Audience 2",
+    "Type": "Lookalike",
+    "Availability": "Ready",
+    "Date created": "02/01/2023",
+    "Audience ID": "234567890123456"
+  }
+]

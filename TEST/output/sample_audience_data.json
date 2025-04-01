@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Similar Last 90 Days",
+    "type": "Lookalike audience",
+    "availability": "Audience not created",
+    "date_created": "09/19/2023 10:09 AM",
+    "audience_id": "23859203708050523"
+  },
+  {
+    "name": "Lookalike (IL, 2%) - Similar Last 90 Days",
+    "type": "Lookalike audience",
+    "availability": "Audience not created",
+    "date_created": "09/19/2023 10:09 AM",
+    "audience_id": "23859203698990523"
+  },
+  {
+    "name": "Lookalike (IL, 1%) - Similar Last 90 Days",
+    "type": "Lookalike audience",
+    "availability": "Audience not created",
+    "date_created": "09/19/2023 10:09 AM",
+    "audience_id": "23859203696410523"
+  }
+] 

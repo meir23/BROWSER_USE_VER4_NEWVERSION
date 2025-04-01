@@ -1,0 +1,29 @@
+<reseaning>
+The user wants to know what to click to set up a lookalike audience.
+1.  **Page and Layer Check:** The screenshot shows the Ad Set editing page ("קהל רחב") and the "Audience" section (Layer 5) is visible. This is the correct page and layer for the task.
+2.  **Control Check:** Setting up a lookalike audience involves using the "Custom audiences" subsection. In the screenshot, the "Custom audiences" label is visible, showing "None" currently selected. However, the text box labeled "Search existing audiences" or a "Create new" option (which are needed to add a lookalike) are not visible directly under the "Custom audiences" label.
+3.  **Classification:** This situation fits the case: **You are on the correct page and the correct layer but do not see the button**. Specifically, the controls needed within the "Custom audiences" section are not immediately visible.
+4.  **Action Determination:** Based on the prompt's specific instructions for this case ("...if you do not see the search box labeled 'search existing audiences', yet you do see a text button labeled 'Custom audiences', you must instruct the agent to click 'Custom audiences' to expand the search box."), the correct action is to interact with the "Custom audiences" area to reveal the hidden controls. Clicking on the text "Custom audiences" or the area where "None" is displayed is the standard way to do this.
+</reseaning>
+
+<action suggestion>
+1.  Click on the text "Custom audiences" (where it currently says "None" below it).
+</action suggestion>
+
+<Important Notes>
+*   This action should expand the "Custom audiences" section, revealing options to search for existing audiences (including lookalikes) or create new ones.
+</Important Notes>
+
+<inner thoughts>
+1.  **Goal:** Identify the click target to start setting up a lookalike audience.
+2.  **Context:** Ad Set > Audience section visible.
+3.  **Target Element:** Need the "Search existing audiences" or "Create new" controls within the "Custom audiences" subsection.
+4.  **Visibility:** "Custom audiences" label is visible, but the search/create controls are not.
+5.  **Classification:** Correct page, correct layer, button/control not visible.
+6.  **Action:** Apply the specific rule from the prompt: Click "Custom audiences" to expand it.
+7.  **Output:** Formulate the click instruction and add context. Ensure compliance with rules.
+</inner thoughts>
+
+<configure recommendation>
+The prompt's specific rule for handling the hidden "Search existing audiences" box under "Custom audiences" was crucial and correctly applied here. The system is working as intended for this scenario. No changes recommended.
+</configure recommendation>

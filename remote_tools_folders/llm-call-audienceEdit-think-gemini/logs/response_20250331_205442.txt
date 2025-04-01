@@ -1,0 +1,29 @@
+<reseaning>
+The user's task is to set up a lookalike audience. This is done within the "Audience" section of the Ad Set settings, specifically by adding a custom audience (a lookalike is a type of custom audience).
+1.  **Page Check:** The screenshot shows the Ad Set editing page ("קהל רחב"), which is the correct page.
+2.  **Layer Check:** The "Audience" section (Layer 5) is visible, which is the correct layer.
+3.  **Button/Control Check:** To set up a lookalike audience, you need to interact with the "Custom audiences" subsection. You would typically use the "Search existing audiences" field to find a pre-existing lookalike or use a "Create new" option. In the screenshot, under the "Custom audiences" label, it says "None", and the search field or create button is not visible.
+4.  **Classification:** This situation falls under the case: **You are on the correct page and the correct layer but do not see the button**. The prompt specifically guides: "If the AI agent's task is to edit a lookalike audience, but you do not see the search box labeled 'search existing audiences', yet you do see a text button labeled 'Custom audiences', you must instruct the agent to click 'Custom audiences' to expand the search box." Clicking the "Custom audiences" label/area is the required step to reveal the controls.
+</reseaning>
+
+<action suggestion>
+1. Click on the text "Custom audiences" (where it currently says "None" below it). This action should expand the section to show the search box and other options for adding custom or lookalike audiences.
+</action suggestion>
+
+<Important Notes>
+*   You are in the correct section ("Audience") to add a lookalike audience.
+*   Interacting with the "Custom audiences" area is necessary to reveal the field where you can search for your existing lookalike audiences or create a new one.
+</Important Notes>
+
+<inner thoughts>
+1.  **Goal:** Set up a lookalike audience.
+2.  **Context:** Same screenshot and task as the previous interaction.
+3.  **Analysis:** The location (Ad Set > Audience) is correct. The specific controls (search/create under "Custom audiences") are hidden.
+4.  **Classification:** Remains "You are on the correct page and the correct layer but do not see the button".
+5.  **Action:** The action remains the same based on the prompt's specific instruction for this case: click "Custom audiences".
+6.  **Output:** Reiterate the previous response as the input context hasn't changed. Ensure clarity and adherence to rules.
+</inner thoughts>
+
+<configure recommendation>
+The system prompt is functioning correctly for this repeated query with the same visual context. It consistently identifies the correct state and provides the appropriate action based on its rules. No changes are recommended based on this interaction.
+</configure recommendation>

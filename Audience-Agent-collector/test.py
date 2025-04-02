@@ -32,7 +32,7 @@ async def fetch_facebook_ads_data() -> str:
     
     browser = Browser(config=BrowserConfig(
         headless=False,
-        cdp_url="ws://127.0.0.1:9222/devtools/browser/6654550c-b3ba-4d7a-8c19-18de969f753a"
+        cdp_url="ws://127.0.0.1:9222/devtools/browser/77839dc3-0324-4ce6-a7a9-f3920787e7f1"
     ))
     
     

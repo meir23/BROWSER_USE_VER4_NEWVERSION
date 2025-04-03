@@ -1,0 +1,1 @@
+The user wants to find the cheapest flight.

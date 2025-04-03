@@ -1,0 +1,63 @@
+{
+  "id": "resp_67ed1b42ea488192b0319546a0451b530b0f64fbf6d5ba1c",
+  "created_at": 1743592259.0,
+  "error": null,
+  "incomplete_details": null,
+  "instructions": null,
+  "metadata": {},
+  "model": "computer-use-preview-2025-03-11",
+  "object": "response",
+  "output": [
+    {
+      "id": "msg_67ed1b46c3308192add04b779e29d6620b0f64fbf6d5ba1c",
+      "content": [
+        {
+          "annotations": [],
+          "text": "It appears that we are in the \"Audiences\" section, but this isn't an edit screen for a campaign. So, I can't find a \"Custom audiences\" option that matches your description. Would you like to navigate somewhere else?",
+          "type": "output_text"
+        }
+      ],
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "temperature": 1.0,
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "display_height": 768.0,
+      "display_width": 1024.0,
+      "environment": "browser",
+      "type": "computer_use_preview"
+    }
+  ],
+  "top_p": 1.0,
+  "max_output_tokens": null,
+  "previous_response_id": null,
+  "reasoning": {
+    "effort": "medium",
+    "generate_summary": "concise"
+  },
+  "status": "completed",
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "truncation": "auto",
+  "usage": {
+    "input_tokens": 2010,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 49,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 2059
+  },
+  "user": null,
+  "store": true
+}

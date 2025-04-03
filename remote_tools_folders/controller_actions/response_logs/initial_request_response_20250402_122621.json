@@ -1,0 +1,75 @@
+{
+  "id": "resp_67ed02b585448192876c5d7ab1fc75c703bce68dcba387a0",
+  "created_at": 1743585973.0,
+  "error": null,
+  "incomplete_details": null,
+  "instructions": null,
+  "metadata": {},
+  "model": "computer-use-preview-2025-03-11",
+  "object": "response",
+  "output": [
+    {
+      "id": "rs_67ed02b925bc8192aa8d8d5202bc3e4a03bce68dcba387a0",
+      "summary": [
+        {
+          "text": "Scrolling left panel for custom audiences",
+          "type": "summary_text"
+        }
+      ],
+      "type": "reasoning",
+      "status": null
+    },
+    {
+      "id": "cu_67ed02bc4a2081929d1694438fb76c5803bce68dcba387a0",
+      "action": {
+        "scroll_x": 0,
+        "scroll_y": 274,
+        "type": "scroll",
+        "x": 238,
+        "y": 829
+      },
+      "call_id": "call_VjU561e7qiZs9uynDODZhBTm",
+      "pending_safety_checks": [],
+      "status": "completed",
+      "type": "computer_call"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "temperature": 1.0,
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "display_height": 768.0,
+      "display_width": 1024.0,
+      "environment": "browser",
+      "type": "computer_use_preview"
+    }
+  ],
+  "top_p": 1.0,
+  "max_output_tokens": null,
+  "previous_response_id": null,
+  "reasoning": {
+    "effort": "medium",
+    "generate_summary": "concise"
+  },
+  "status": "completed",
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "truncation": "auto",
+  "usage": {
+    "input_tokens": 4070,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 127,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 4197
+  },
+  "user": null,
+  "store": true
+}

@@ -91,16 +91,23 @@ async def initialize_computer_agent(params: CreateAgentParams, browser: Browser)
     global _computer_agent_instance
     logger.info(f"Attempting to initialize ComputerAgent with params: {params.dict()}")
 
-    # Potentially use browser context to get current URL/Title if needed
-    current_url = await browser.page.evaluate("() => window.location.href")
-    current_title = await browser.page.title()
-    
-    # Decide whether to use params.url/page_name or current browser state
-    # For now, let's prioritize params if provided, otherwise use browser state.
-    url_to_use = params.url if params.url is not None else current_url
-    page_name_to_use = params.page_name if params.page_name is not None else current_title
-
     try:
+        # Get the current page properly from the browser context
+        current_page = await browser.get_current_page()
+        
+        if not current_page:
+            logger.error("Failed to get current page from browser context")
+            return ActionResult(error="Failed to get current page from browser context. Ensure a page is open.")
+        
+        # Now use the current_page object to get URL and title
+        current_url = current_page.url
+        current_title = await current_page.title()
+        
+        # Decide whether to use params.url/page_name or current browser state
+        # For now, let's prioritize params if provided, otherwise use browser state.
+        url_to_use = params.url if params.url is not None else current_url
+        page_name_to_use = params.page_name if params.page_name is not None else current_title
+
         agent = create_computer_agent(
             context_path=params.context_path,
             rules_path=params.rules_path,
@@ -147,17 +154,23 @@ async def run_computer_vision_request(params: RunRequestParams, browser: Browser
 
     screenshot_path = None
     try:
-        # 1. Take screenshot using browser context
+        # 1. Get current page from browser context
+        current_page = await browser.get_current_page()
+        if not current_page:
+            logger.error("Failed to get current page from browser context")
+            return ActionResult(error="Failed to get current page from browser context. Ensure a page is open.")
+            
+        # 2. Take screenshot using the current page
         logger.info("Taking screenshot...")
-        screenshot_bytes = await browser.page.screenshot()
+        screenshot_bytes = await current_page.screenshot()
 
-        # 2. Save screenshot to a temporary file
+        # 3. Save screenshot to a temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
             temp_file.write(screenshot_bytes)
             screenshot_path = temp_file.name
         logger.info(f"Screenshot saved temporarily to: {screenshot_path}")
 
-        # 3. Call the original run_computer_agent_request function
+        # 4. Call the original run_computer_agent_request function
         response = run_computer_agent_request(
             agent=_computer_agent_instance,
             task_or_call_id=params.task_or_call_id,
@@ -165,7 +178,7 @@ async def run_computer_vision_request(params: RunRequestParams, browser: Browser
             acknowledged_safety_checks=params.acknowledged_safety_checks
         )
 
-        # 4. Process the response
+        # 5. Process the response
         if response:
             logger.info("Computer vision request successful.")
             # Return the response object formatted as text
@@ -189,7 +202,7 @@ async def run_computer_vision_request(params: RunRequestParams, browser: Browser
         logger.error(f"Unexpected error during computer vision request: {e}", exc_info=True)
         return ActionResult(error=f"Unexpected error during vision request: {e}")
     finally:
-        # 5. Clean up the temporary screenshot file
+        # 6. Clean up the temporary screenshot file
         if screenshot_path and os.path.exists(screenshot_path):
             try:
                 os.remove(screenshot_path)

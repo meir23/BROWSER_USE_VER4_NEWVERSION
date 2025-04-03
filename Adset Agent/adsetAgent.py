@@ -46,18 +46,44 @@ async def run_adset_agent():
     # Define the main task for the Adset Agent
     # This task should leverage the new actions:
     # 'initialize_computer_agent' and 'run_computer_vision_request'
-    task = """
-    Your primary goal is to [Define the overall goal, e.g., 'create a new ad set with specific targeting'].
+    # Define a proper URL for Facebook Ads Manager
+    ads_manager_url = "https://www.facebook.com/adsmanager/manage/campaigns"
+    
+    task = f"""
+    Your primary goal is to create a new 'Traffic' ad set in Facebook Ads Manager with manual setup, name it 'New Traffic Campaign', set the website URL to 'http://www.example.com', add an image, and publish it.
+
+    INTERACTION STRATEGY (Apply this for all clicks and inputs):
+    1.  **Attempt Index First:** Try the action (e.g., `click_element`, `input_text`) using the element `index` you deem most likely based on the current context and screenshot.
+    2.  **Retry Index on Failure:** If the first attempt returns an error (e.g., element not found, not clickable), analyze the error and context, then try the *same* action **one** more time with the next best `index`.
+    3.  **Fallback to Coordinates:** If the second index-based attempt also fails, you MUST then use the `run_computer_vision_request` action to obtain the precise coordinates for the target element (provide a clear description like "Find coordinates for the 'Continue' button"). Following that, use the corresponding coordinate-based action (e.g., `click_element_at_coordinates`, `input_text_at_coordinates`) with the obtained x and y values. Do not attempt the index-based action a third time.
+    4.  **Vision for Verification:** Independently of action success/failure, use `run_computer_vision_request` to visually verify the page state after critical steps (like loading a new page section, before publishing) or when you are unsure about the outcome of an action. Specify what you need to confirm (e.g., "Verify the Ad Set settings page is loaded", "Check for error messages before publishing").
 
     INSTRUCTIONS:
-    1. First, you MUST call the 'initialize_computer_agent' action to enable visual analysis capabilities.
-    2. Navigate to the Facebook Ads Manager Ad Set creation page: [Specific URL].
-    3. Use the 'run_computer_vision_request' action whenever you need to identify element locations for clicking or scrolling. Provide a clear instruction like "Find the 'Campaign Name' input field" or "Click the 'Next' button" as the 'task_or_call_id'.
-    4. Analyze the response from 'run_computer_vision_request'. It will contain information about the element or suggested actions (like coordinates for a click).
-    5. Use standard browser actions (like 'click_element_at_coordinates', 'scroll_page', 'type_text') based on the information received from the vision agent.
-    6. [Add more steps specific to the ad set creation process]
-    7. If the vision agent indicates it needs more steps (provides a 'call_id'), use that 'call_id' in the subsequent 'run_computer_vision_request' call.
-    8. Complete the task by [Define success criteria, e.g., 'saving the ad set'].
+    A.  **Initialization:** First, you MUST call the 'initialize_computer_agent' action.
+    B.  **Navigation:** Navigate to the Facebook Ads Manager campaigns page: {ads_manager_url}.
+    C.  **Create Campaign:** Apply the Interaction Strategy for each step:
+        *   Click the 'Create' button.
+        *   Click the 'Traffic' objective.
+        *   Click 'Continue'.
+        *   Click 'Manual traffic campaign'.
+        *   Click 'Continue'.
+    D.  **Campaign Settings:** Apply the Interaction Strategy:
+        *   Find the 'Campaign name' input field. Input 'New Traffic Campaign'.
+    E.  **Ad Set Settings:** [Add detailed steps for Ad Set level, applying the Interaction Strategy]
+        *   Ensure 'Website' conversion location is selected (click if necessary).
+        *   ... other Ad Set settings ...
+        *   Click the 'Next' or equivalent button.
+    F.  **Ad Settings:** Apply the Interaction Strategy:
+        *   Find the 'Website URL' field. Input 'http://www.example.com'.
+        *   **Add Image (Multi-Step):** Apply the Interaction Strategy carefully for each sub-step:
+            *   Click the 'Add Media' or 'Add Image' button.
+            *   If an upload dialog appears, use vision requests and coordinate clicks to navigate it (e.g., click 'Upload', potentially handle file selection if possible within limitations, click 'Confirm'/'Done'). Use visual verification (`run_computer_vision_request`) to confirm the image appears selected in the Ad preview.
+        *   ... other Ad settings ...
+    G.  **Verification & Publishing:**
+        *   **Before publishing:** Use `run_computer_vision_request` task='Check for any error messages or warnings on the final review page'. Address any issues found.
+        *   Apply the Interaction Strategy to click the 'Publish' button.
+    H.  **Error Handling (General):** If actions fail even after the coordinate fallback, or if vision verification shows unexpected results or errors, use `run_computer_vision_request` to analyze the full screen, understand the current state, and decide the best next step (which might be retrying, correcting a previous step, or stopping if the task is unrecoverable). If the vision agent provides a 'call_id' for multi-step analysis, use it in the next relevant request.
+    I.  **Completion:** The task is complete **ONLY IF** the final 'Publish' action (e.g., `click_element` or `click_element_at_coordinates` targeting 'Publish') **returned a success message** (not an error like 'Element not clickable' or 'not found') **AND** a subsequent, **successful** visual check (`run_computer_vision_request` that did not error out due to `call_id` or other issues) confirms a success message OR the UI indicates the campaign/ad set is publishing/in review/active. If the final 'Publish' action itself fails, OR if the required final visual verification fails or cannot be performed (e.g., due to a `call_id` error), you MUST call `done` with `success=false` and clearly state the point of failure.
     """
 
     try:

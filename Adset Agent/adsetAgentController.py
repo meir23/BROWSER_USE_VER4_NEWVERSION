@@ -72,16 +72,15 @@ class CreateAgentParams(BaseModel):
     page_name: Optional[str] = Field(None, description="Optional initial page name associated with the agent's context")
 
 class RunRequestParams(BaseModel):
-    task_or_call_id: str = Field(..., description="For initial calls, the task description. For subsequent calls, the call_id from the previous response.")
-    acknowledged_safety_checks: Optional[List[Dict[str, Any]]] = Field(None, description="Optional list of safety checks to acknowledge (for subsequent calls)")
-    # screenshot_path will be handled internally using the browser context
+    task: str = Field(..., description="The specific task description for the vision agent.")
+    # removed acknowledged_safety_checks field
 
 # --- Custom Actions ---
 
-@controller.action(
-    'Initialize the Computer Vision Agent',
-    param_model=CreateAgentParams
-)
+#@controller.action(
+#    'Initialize the Computer Vision Agent',
+#    param_model=CreateAgentParams
+#)
 async def initialize_computer_agent(params: CreateAgentParams, browser: Browser) -> ActionResult:
     """
     Initializes the secondary Computer Agent responsible for vision-based tasks.
@@ -135,18 +134,19 @@ async def initialize_computer_agent(params: CreateAgentParams, browser: Browser)
         logger.error(f"Unexpected error during ComputerAgent initialization: {e}", exc_info=True)
         return ActionResult(error=f"Unexpected Initialization Error: {e}")
 
-@controller.action(
-    'Run Computer Vision Request',
-    param_model=RunRequestParams
-)
+#@controller.action(
+#    'Run Computer Vision Request',
+#    param_model=RunRequestParams
+#)
 async def run_computer_vision_request(params: RunRequestParams, browser: Browser) -> ActionResult:
     """
     Takes a screenshot of the current page and sends it to the initialized
-    Computer Vision Agent along with the task or previous call_id to get the next action/coordinates.
+    Computer Vision Agent along with the task to get the next action/coordinates.
+    This is a stateless call that does not depend on previous calls.
     Requires 'initialize_computer_agent' to be called first.
     """
     global _computer_agent_instance
-    logger.info(f"Running computer vision request with task/call_id: {params.task_or_call_id}")
+    logger.info(f"Running computer vision request with task: {params.task}")
 
     if _computer_agent_instance is None:
         logger.error("Computer Vision Agent is not initialized. Call 'initialize_computer_agent' first.")
@@ -170,12 +170,11 @@ async def run_computer_vision_request(params: RunRequestParams, browser: Browser
             screenshot_path = temp_file.name
         logger.info(f"Screenshot saved temporarily to: {screenshot_path}")
 
-        # 4. Call the original run_computer_agent_request function
+        # 4. Call the updated run_computer_agent_request function with stateless approach
         response = run_computer_agent_request(
             agent=_computer_agent_instance,
-            task_or_call_id=params.task_or_call_id,
-            screenshot_path=screenshot_path,
-            acknowledged_safety_checks=params.acknowledged_safety_checks
+            task=params.task,
+            screenshot_path=screenshot_path
         )
 
         # 5. Process the response
@@ -195,8 +194,8 @@ async def run_computer_vision_request(params: RunRequestParams, browser: Browser
             logger.error("run_computer_agent_request returned None.")
             return ActionResult(error="Computer vision request failed. Check logs.")
 
-    except (APIError, BadRequestError, RateLimitError, AuthenticationError) as e:
-         logger.error(f"API or Authentication error during vision request: {e}")
+    except (APIError, BadRequestError, RateLimitError, AuthenticationError, ValueError) as e:
+         logger.error(f"API, Authentication, or Value error during vision request: {e}")
          return ActionResult(error=f"Computer Vision API Error: {e}")
     except Exception as e:
         logger.error(f"Unexpected error during computer vision request: {e}", exc_info=True)

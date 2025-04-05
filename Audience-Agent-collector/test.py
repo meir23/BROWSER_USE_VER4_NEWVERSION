@@ -147,6 +147,11 @@ this is very important.
             #extend_system_message=open("/Users/meirsabag/Public/browser_use_ver4_newVersion/anatomic_behavior_rules.md").read()
         )
         
+
+        agent.settings.save_conversation_path = "/Users/meirsabag/Public/browser_use_ver4_newVersion/history"
+        agent.settings.available_file_paths = ["/Users/meirsabag/Public/browser_use_ver4_newVersion/history"]
+        
+
         result = await agent.run()
         return result
         

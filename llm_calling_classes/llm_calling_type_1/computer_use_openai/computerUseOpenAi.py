@@ -174,16 +174,23 @@ class ComputerAgent:
              print(f"Error: Failed to encode image file {image_path} to base64: {e}")
              raise ValueError(f"Error encoding image file {image_path} to base64: {e}")
 
-    def run_step(self,
+    def run_step_with_memory(self,
                  task_or_previous_call_id: str,
                  screenshot_path: str,
                  acknowledged_safety_checks: list | None = None):
         """
+        (Original run_step method renamed)
         Executes a single step in the computer interaction loop via the OpenAI API.
 
         This method intelligently handles both the initial call (when the agent's
         'last_response_id' is None) and subsequent calls in the conversation loop
         by using the 'previous_response_id' parameter when appropriate.
+
+        TODO: Fix call_id handling for subsequent calls. The caller (e.g., adsetAgentController)
+              needs to extract the 'call_id' from the 'computer_call' action in the response
+              and pass it correctly as 'task_or_previous_call_id' for the *next* step when
+              using this memory-based approach. The current implementation likely fails because
+              the full response string or task description is passed instead of the specific call_id.
 
         Args:
             task_or_previous_call_id (str):
@@ -210,7 +217,7 @@ class ComputerAgent:
             openai.APIError: For other general OpenAI API related errors.
             Exception: For any other unexpected errors during the process.
         """
-        print(f"\n--- Running Agent Step ---")
+        print(f"\n--- Running Agent Step (WITH MEMORY) ---")
         print(f"Current last_response_id: {self.last_response_id}")
         print(f"Received task/call_id: '{task_or_previous_call_id}'")
         print(f"Using screenshot: {screenshot_path}")
@@ -245,7 +252,7 @@ class ComputerAgent:
         # --- 3. Determine Call Type and Construct Specific Inputs ---
         if self.last_response_id is None:
             # ---=== INITIAL CALL LOGIC ===---
-            print("Call Type: Initial")
+            print("Call Type: Initial (Memory Mode)")
             # In the first call, the first argument is interpreted as the task description
             task_description = task_or_previous_call_id
             if not isinstance(task_description, str) or not task_description.strip():
@@ -295,7 +302,7 @@ class ComputerAgent:
 
         else:
             # ---=== SUBSEQUENT CALL LOGIC ===---
-            print("Call Type: Subsequent")
+            print("Call Type: Subsequent (Memory Mode)")
             # In subsequent calls, the first argument is interpreted as the previous call_id
             previous_call_id = task_or_previous_call_id
             if not isinstance(previous_call_id, str) or not previous_call_id.startswith("call_"):
@@ -386,6 +393,113 @@ class ComputerAgent:
             # import traceback
             # traceback.print_exc()
             # It's hard to know the state validity here, re-raise
+            raise
+
+    def run_step(self,
+                 task: str,
+                 screenshot_path: str):
+        """
+        Executes a single, stateless step via the OpenAI Computer Use API.
+
+        This method treats every call as independent, sending the full context
+        (system prompt, rules, context, url, page name, task) along with the
+        screenshot. It does NOT use 'previous_response_id' or expect 'call_id'.
+
+        Args:
+            task (str): The specific task description for this independent analysis
+                        (e.g., "Click the 'Login' button", "Verify settings saved").
+            screenshot_path (str): The file path to the PNG screenshot representing
+                                   the current state of the environment.
+
+        Returns:
+            The complete response object from the OpenAI API upon successful execution.
+
+        Raises:
+            FileNotFoundError: If the screenshot file path does not exist.
+            IOError: If there is an error reading the screenshot file.
+            ValueError: If there is an error encoding the screenshot or task is empty.
+            openai.AuthenticationError: If authentication with OpenAI fails.
+            openai.RateLimitError: If the OpenAI API rate limit is exceeded.
+            openai.BadRequestError: If the request structure is invalid.
+            openai.APIError: For other general OpenAI API related errors.
+            Exception: For any other unexpected errors during the process.
+        """
+        print(f"\n--- Running Agent Step (STATELESS) ---")
+        print(f"Received task: '{task}'")
+        print(f"Using screenshot: {screenshot_path}")
+
+        # --- 1. Prepare Screenshot ---
+        try:
+            screenshot_base64 = self._encode_image_to_base64(screenshot_path)
+            image_url = f"data:image/png;base64,{screenshot_base64}"
+        except (FileNotFoundError, IOError, ValueError) as e:
+            raise
+
+        # --- 2. Prepare API Request Parameters (Always Initial Structure) ---
+        request_params = {
+            "model": "computer-use-preview",
+            "tools": [{
+                "type": "computer_use_preview",
+                "display_width": self.display_width,
+                "display_height": self.display_height,
+                "environment": self.environment
+            }],
+            "truncation": "auto",
+            "input": [],
+            "reasoning": {"generate_summary": "concise"}
+        }
+
+        # --- 3. Construct Input (Always Initial Format) ---
+        print("Call Type: Stateless (Always treated as Initial)")
+        if not isinstance(task, str) or not task.strip():
+             print("Error: Stateless call requires a non-empty task description.")
+             raise ValueError("Task description (string) is required for the stateless call.")
+
+        content_parts = []
+        if self.system_prompt: content_parts.append(f"<system_prompt>\n{self.system_prompt}\n</system_prompt>")
+        if self.rules: content_parts.append(f"<rules>\n{self.rules}\n</rules>")
+        if self.context: content_parts.append(f"<context>\n{self.context}\n</context>")
+        if self.url: content_parts.append(f"<url>{self.url}</url>")
+        if self.page_name: content_parts.append(f"<page_name>{self.page_name}</page_name>")
+        content_parts.append(f"<task>\n{task}\n</task>") # Use the provided task
+        full_content_string = "\n\n".join(content_parts)
+        print(f"Constructed Stateless Prompt Content (structure only)")
+
+        request_params["input"].append({
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": full_content_string},
+                {"type": "input_image", "image_url": image_url}
+            ]
+        })
+
+        # --- 4. Execute API Call ---
+        print("Sending request to OpenAI API (Stateless Mode)...")
+        try:
+            response = self.client.responses.create(**request_params)
+            print("API call successful (Stateless Mode).")
+
+            # --- 5. NO State Update ---
+            # self.last_response_id is NOT updated in stateless mode
+
+            return response
+
+        # --- 6/7. Handle Errors (Identical error handling logic) ---
+        except AuthenticationError as e:
+            print(f"Fatal Error: OpenAI Authentication Error: {e}.")
+            raise
+        except RateLimitError as e:
+            print(f"Error: OpenAI Rate Limit Exceeded: {e}.")
+            raise
+        except BadRequestError as e:
+             print(f"Error: OpenAI Bad Request Error (4xx): {e}.")
+             print(f"Status Code: {e.status_code}")
+             raise
+        except APIError as e:
+            print(f"Error: OpenAI API Error: {e}. Status Code: {e.status_code}")
+            raise
+        except Exception as e:
+            print(f"Fatal Error: An unexpected error occurred during the API call execution: {e}")
             raise
 
 # --- Example Usage (Illustrative) ---

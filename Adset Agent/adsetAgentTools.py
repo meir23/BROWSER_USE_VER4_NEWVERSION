@@ -102,19 +102,16 @@ def create_computer_agent(
 
 def run_computer_agent_request(
     agent: ComputerAgent,
-    task_or_call_id: str,
-    screenshot_path: str,
-    acknowledged_safety_checks: Optional[List[Dict[str, Any]]] = None
+    task: str,
+    screenshot_path: str
 ) -> Optional[Any]:
     """
-    Execute a request using the ComputerAgent, handling both initial and subsequent steps.
+    Execute a stateless request using the ComputerAgent's run_step method.
     
     Args:
         agent: A ComputerAgent instance
-        task_or_call_id: For initial calls, this is the task description. 
-                         For subsequent calls, this is the call_id from the previous response.
+        task: The specific task description for this request.
         screenshot_path: Path to the screenshot image file showing the current state
-        acknowledged_safety_checks: Optional list of safety checks to acknowledge (for subsequent calls)
         
     Returns:
         The API response object if successful, None if an error occurred
@@ -123,15 +120,9 @@ def run_computer_agent_request(
         logger.error("Cannot run request: ComputerAgent is None")
         return None
         
-    # Log the request type (initial or subsequent)
-    is_initial = agent.last_response_id is None
-    logger.info(f"Running {'initial' if is_initial else 'subsequent'} request")
-    
-    if is_initial:
-        logger.info(f"Task: {task_or_call_id}")
-    else:
-        logger.info(f"Using call_id: {task_or_call_id}")
-    
+    # Log the request type (now always stateless)
+    logger.info(f"Running stateless vision request")
+    logger.info(f"Task: {task}")
     logger.info(f"Screenshot path: {screenshot_path}")
     
     # Verify screenshot exists
@@ -140,11 +131,10 @@ def run_computer_agent_request(
         return None
     
     try:
-        # Execute the API request
+        # Execute the API request using the new stateless run_step method
         response = agent.run_step(
-            task_or_previous_call_id=task_or_call_id,
-            screenshot_path=screenshot_path,
-            acknowledged_safety_checks=acknowledged_safety_checks
+            task=task,
+            screenshot_path=screenshot_path
         )
         
         # Log response details
@@ -161,6 +151,9 @@ def run_computer_agent_request(
                                 logger.info(f"Click coordinates: ({item.action.x}, {item.action.y})")
                             else:
                                 logger.warning("Click action object missing x or y attribute.")
+                        # Log call_id for informational purposes, but it won't be reused in stateless mode
+                        if hasattr(item, 'call_id'):
+                            logger.info(f"Call ID (informational only): {item.call_id}")
                     elif item.type == 'reasoning':
                         if hasattr(item, 'summary'):
                             summary_texts = [s.text for s in item.summary if hasattr(s, 'type') and s.type == 'summary_text']
@@ -182,6 +175,9 @@ def run_computer_agent_request(
         return None
     except APIError as e:
         logger.error(f"API error: {e}. Status code: {e.status_code if hasattr(e, 'status_code') else 'N/A'}")
+        return None
+    except ValueError as e:
+        logger.error(f"Value error: {e}")
         return None
     except Exception as e:
         logger.error(f"Unexpected error executing request: {e}")
@@ -219,9 +215,8 @@ if __name__ == "__main__":
     # Display the request parameters in a structured format
     print("\n=== REQUEST PARAMETERS ===")
     request_params = {
-        "task_or_call_id": TASK,
-        "screenshot_path": SCREENSHOT_PATH,
-        "acknowledged_safety_checks": None
+        "task": TASK,
+        "screenshot_path": SCREENSHOT_PATH
     }
     
     import json
@@ -230,7 +225,7 @@ if __name__ == "__main__":
     # Execute the request
     response = run_computer_agent_request(
         agent=agent,
-        task_or_call_id=TASK,
+        task=TASK,
         screenshot_path=SCREENSHOT_PATH
     )
     
@@ -286,7 +281,7 @@ if __name__ == "__main__":
         # Run subsequent request
         response2 = run_computer_agent_request(
             agent=agent,
-            task_or_call_id=first_action.call_id,
+            task=first_action.call_id,
             screenshot_path=NEW_SCREENSHOT_PATH
         )
         """
